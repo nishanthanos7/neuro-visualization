@@ -56,7 +56,7 @@ interface BrainSignalProps {
 
 const BrainSignal: React.FC<BrainSignalProps> = ({ signals }) => {
   const mesh = useRef<THREE.Mesh>(null)
-  const textRef = useRef<any>(null)
+  const textRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
   const particlesRef = useRef<THREE.Mesh[]>([])
   const emotionRef = useRef<THREE.Mesh>(null)
