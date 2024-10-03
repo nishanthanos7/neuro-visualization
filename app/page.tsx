@@ -55,10 +55,10 @@ const getEmotionColor = (emotion: string): THREE.Color => {
 
 const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
   const mesh = useRef<THREE.Mesh>(null);
-  const textRef = useRef<any>(null);
+  const textRef = useRef<THREE.Mesh>(null); // Change from any to THREE.Mesh
   const glowRef = useRef<THREE.Mesh>(null);
   const emotionRef = useRef<THREE.Mesh>(null);
-  const { scene } = useThree();
+  const { scene: _ } = useThree(); // Use underscore to indicate unused variable
   const targetPosition = useRef(new THREE.Vector3(0, 0, 0));
   const targetColor = useRef(new THREE.Color(0.5, 0.5, 0.5));
   const currentColor = useRef(new THREE.Color(0.5, 0.5, 0.5));
@@ -86,7 +86,7 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
     };
   }, [noise, filter]);
 
-  useFrame((state, delta) => {
+  useFrame((state) => { // Remove 'delta' if it's not used
     if (mesh.current) {
       mesh.current.position.lerp(targetPosition.current, 0.1);
       targetPosition.current.set(
@@ -138,7 +138,7 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
 
       const currentTime = state.clock.getElapsedTime();
       if (currentTime - lastTriggerTime.current > 0.5) {
-        let currentFocusState: 'high' | 'low' | 'normal' = 
+        const currentFocusState: 'high' | 'low' | 'normal' = 
           signals.focus > 80 ? 'high' :
           signals.focus < 20 ? 'low' :
           'normal';
@@ -172,7 +172,7 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
       textRef.current.position.x = mesh.current?.position.x || 0;
       textRef.current.position.y = (mesh.current?.position.y || 0) + 1.5;
       textRef.current.position.z = mesh.current?.position.z || 0;
-      textRef.current.text = getPersonCondition(signals);
+      (textRef.current as unknown as { text: string }).text = getPersonCondition(signals);
     }
   });
 
@@ -189,7 +189,7 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
       </mesh>
 
       <Text
-        ref={textRef}
+        ref={textRef as React.RefObject<THREE.Mesh>}
         color="white"
         anchorX="center"
         anchorY="middle"
@@ -336,6 +336,8 @@ interface WebcamEmotionDetectorProps {
 
 
 
+
+
 const WebcamEmotionDetector: React.FC<WebcamEmotionDetectorProps> = ({
   onEmotionDetected,
 }) => {
@@ -348,8 +350,12 @@ const WebcamEmotionDetector: React.FC<WebcamEmotionDetectorProps> = ({
       const MODEL_URL = '/models';
 
       try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+        const tinyFaceDetectorWeights = await fetch(`${MODEL_URL}/tiny_face_detector_model-weights_manifest.json`).then(r => r.json());
+        const faceExpressionNetWeights = await fetch(`${MODEL_URL}/face_expression_model-weights_manifest.json`).then(r => r.json());
+
+        await faceapi.nets.tinyFaceDetector.loadFromWeightMap(tinyFaceDetectorWeights);
+        await faceapi.nets.faceExpressionNet.loadFromWeightMap(faceExpressionNetWeights);
+
         setModelsLoaded(true);
       } catch (error) {
         console.error("Error loading models:", error);
@@ -386,14 +392,18 @@ const WebcamEmotionDetector: React.FC<WebcamEmotionDetectorProps> = ({
           .withFaceExpressions();
 
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
-        canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
-        faceapi.draw.drawDetections(canvas, resizedDetections);
-        faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          faceapi.draw.drawDetections(canvas, resizedDetections);
+          faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+        }
 
         if (detections.length > 0) {
-          const emotions = detections[0].expressions;
-          const dominantEmotion = Object.entries(emotions).reduce((a, b) =>
-            a[1] > b[1] ? a : b
+          const emotions: { [key: string]: number } = detections[0].expressions;
+          const dominantEmotion = Object.entries(emotions).reduce<[string, number]>(
+            (a, b) => (a[1] > b[1] ? a : b),
+            ['neutral', 0] // Initial value
           )[0];
           onEmotionDetected(dominantEmotion);
         }
