@@ -77,7 +77,7 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
   );
 
   const lastTriggerTime = useRef(0);
-  const lastFocusState = useRef<'high' | 'low' | 'normal'>('normal');
+  const lastFocusState = useRef<"high" | "low" | "normal">("normal");
 
   useEffect(() => {
     noise.connect(filter);
@@ -86,7 +86,8 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
     };
   }, [noise, filter]);
 
-  useFrame((state) => { // Remove 'delta' if it's not used
+  useFrame((state) => {
+    // Remove 'delta' if it's not used
     if (mesh.current) {
       mesh.current.position.lerp(targetPosition.current, 0.1);
       targetPosition.current.set(
@@ -129,25 +130,26 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
       }
 
       if (emotionRef.current) {
-        (emotionRef.current.material as THREE.MeshBasicMaterial).map = 
-          signals.emotion === "happy" ? textures.happy :
-          signals.emotion === "sad" ? textures.sad :
-          textures.neutral;
-        emotionRef.current.position.y = 1.5 + Math.sin(state.clock.elapsedTime * 2) * 0.1;
+        (emotionRef.current.material as THREE.MeshBasicMaterial).map =
+          signals.emotion === "happy"
+            ? textures.happy
+            : signals.emotion === "sad"
+            ? textures.sad
+            : textures.neutral;
+        emotionRef.current.position.y =
+          1.5 + Math.sin(state.clock.elapsedTime * 2) * 0.1;
       }
 
       const currentTime = state.clock.getElapsedTime();
       if (currentTime - lastTriggerTime.current > 0.5) {
-        const currentFocusState: 'high' | 'low' | 'normal' = 
-          signals.focus > 80 ? 'high' :
-          signals.focus < 20 ? 'low' :
-          'normal';
+        const currentFocusState: "high" | "low" | "normal" =
+          signals.focus > 80 ? "high" : signals.focus < 20 ? "low" : "normal";
 
         if (currentFocusState !== lastFocusState.current) {
-          if (currentFocusState === 'high') {
+          if (currentFocusState === "high") {
             synth.triggerAttackRelease("C4", "8n");
             filter.frequency.rampTo(2000, 0.1);
-          } else if (currentFocusState === 'low') {
+          } else if (currentFocusState === "low") {
             synth.triggerAttackRelease("A3", "8n");
             filter.frequency.rampTo(500, 0.1);
           }
@@ -157,12 +159,12 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
       }
 
       if (signals.stress > 80) {
-        if (!noise.state.includes('started')) {
+        if (!noise.state.includes("started")) {
           noise.start();
         }
         noise.volume.rampTo(-20, 0.1);
       } else {
-        if (noise.state.includes('started')) {
+        if (noise.state.includes("started")) {
           noise.stop();
         }
       }
@@ -172,7 +174,8 @@ const BrainSignal: React.FC<{ signals: BrainSignals }> = ({ signals }) => {
       textRef.current.position.x = mesh.current?.position.x || 0;
       textRef.current.position.y = (mesh.current?.position.y || 0) + 1.5;
       textRef.current.position.z = mesh.current?.position.z || 0;
-      (textRef.current as unknown as { text: string }).text = getPersonCondition(signals);
+      (textRef.current as unknown as { text: string }).text =
+        getPersonCondition(signals);
     }
   });
 
@@ -334,10 +337,6 @@ interface WebcamEmotionDetectorProps {
   onEmotionDetected: (emotion: string) => void;
 }
 
-
-
-
-
 const WebcamEmotionDetector: React.FC<WebcamEmotionDetectorProps> = ({
   onEmotionDetected,
 }) => {
@@ -347,14 +346,22 @@ const WebcamEmotionDetector: React.FC<WebcamEmotionDetectorProps> = ({
 
   useEffect(() => {
     const loadModels = async () => {
-      const MODEL_URL = '/models';
+      const MODEL_URL = "/models";
 
       try {
-        const tinyFaceDetectorWeights = await fetch(`${MODEL_URL}/tiny_face_detector_model-weights_manifest.json`).then(r => r.json());
-        const faceExpressionNetWeights = await fetch(`${MODEL_URL}/face_expression_model-weights_manifest.json`).then(r => r.json());
+        const tinyFaceDetectorWeights = await fetch(
+          `${MODEL_URL}/tiny_face_detector_model-weights_manifest.json`
+        ).then((r) => r.json());
+        const faceExpressionNetWeights = await fetch(
+          `${MODEL_URL}/face_expression_model-weights_manifest.json`
+        ).then((r) => r.json());
 
-        await faceapi.nets.tinyFaceDetector.loadFromWeightMap(tinyFaceDetectorWeights);
-        await faceapi.nets.faceExpressionNet.loadFromWeightMap(faceExpressionNetWeights);
+        await faceapi.nets.tinyFaceDetector.loadFromWeightMap(
+          tinyFaceDetectorWeights
+        );
+        await faceapi.nets.faceExpressionNet.loadFromWeightMap(
+          faceExpressionNetWeights
+        );
 
         setModelsLoaded(true);
       } catch (error) {
@@ -382,17 +389,26 @@ const WebcamEmotionDetector: React.FC<WebcamEmotionDetectorProps> = ({
     if (!modelsLoaded || !videoRef.current || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
-    const displaySize = { width: videoRef.current.width, height: videoRef.current.height };
+    const displaySize = {
+      width: videoRef.current.width,
+      height: videoRef.current.height,
+    };
     faceapi.matchDimensions(canvas, displaySize);
 
     setInterval(async () => {
       if (videoRef.current) {
         const detections = await faceapi
-          .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+          .detectAllFaces(
+            videoRef.current,
+            new faceapi.TinyFaceDetectorOptions()
+          )
           .withFaceExpressions();
 
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
-        const ctx = canvas.getContext('2d');
+        const resizedDetections = faceapi.resizeResults(
+          detections,
+          displaySize
+        );
+        const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           faceapi.draw.drawDetections(canvas, resizedDetections);
@@ -401,9 +417,11 @@ const WebcamEmotionDetector: React.FC<WebcamEmotionDetectorProps> = ({
 
         if (detections.length > 0) {
           const emotions: { [key: string]: number } = detections[0].expressions;
-          const dominantEmotion = Object.entries(emotions).reduce<[string, number]>(
+          const dominantEmotion = Object.entries(emotions).reduce<
+            [string, number]
+          >(
             (a, b) => (a[1] > b[1] ? a : b),
-            ['neutral', 0] // Initial value
+            ["neutral", 0] // Initial value
           )[0];
           onEmotionDetected(dominantEmotion);
         }
