@@ -8,6 +8,13 @@ import * as THREE from 'three'
 import * as Tone from 'tone'
 import * as faceapi from 'face-api.js'
 
+<<<<<<< HEAD
+=======
+
+
+const textRef = useRef<Text>(null)
+
+>>>>>>> origin/main
 interface BrainSignals {
   focus: number;
   cognitiveLoad: number;
@@ -56,7 +63,11 @@ interface BrainSignalProps {
 
 const BrainSignal: React.FC<BrainSignalProps> = ({ signals }) => {
   const mesh = useRef<THREE.Mesh>(null)
+<<<<<<< HEAD
   const textRef = useRef<any>(null)
+=======
+  const textRef = useRef<THREE.Mesh>(null)
+>>>>>>> origin/main
   const glowRef = useRef<THREE.Mesh>(null)
   const particlesRef = useRef<THREE.Mesh[]>([])
   const emotionRef = useRef<THREE.Mesh>(null)
@@ -93,7 +104,11 @@ const BrainSignal: React.FC<BrainSignalProps> = ({ signals }) => {
       targetPosition.current.clamp(new THREE.Vector3(-2, -2, -2), new THREE.Vector3(2, 2, 2))
 
       currentColor.current.lerp(targetColor.current, 0.1)
+<<<<<<< HEAD
       mesh.current.material.color = currentColor.current
+=======
+      ;(mesh.current.material as THREE.MeshBasicMaterial).color = currentColor.current
+>>>>>>> origin/main
 
       const emotionColor = getEmotionColor(signals.emotion)
       const stressColor = new THREE.Color(1, 0, 0)
@@ -107,8 +122,14 @@ const BrainSignal: React.FC<BrainSignalProps> = ({ signals }) => {
       mesh.current.rotation.y += rotationSpeed
 
       if (glowRef.current) {
+<<<<<<< HEAD
         glowRef.current.material.color = currentColor.current
         ;(glowRef.current.material as THREE.MeshBasicMaterial).opacity = 0.3 + (signals.stress / 100) * 0.7
+=======
+        const material = glowRef.current.material as THREE.MeshBasicMaterial;
+        material.color = currentColor.current;
+        material.opacity = 0.3 + (signals.stress / 100) * 0.7;
+>>>>>>> origin/main
         glowRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 2) * 0.1)
       }
 
@@ -142,10 +163,16 @@ const BrainSignal: React.FC<BrainSignalProps> = ({ signals }) => {
       }
     }
 
+<<<<<<< HEAD
     if (textRef.current) {
       textRef.current.position.x = mesh.current?.position.x || 0
       textRef.current.position.y = (mesh.current?.position.y || 0) + 1.5
       textRef.current.position.z = mesh.current?.position.z || 0
+=======
+    if (textRef.current && mesh.current) {
+      textRef.current.position.z = mesh.current.position.z
+      // @ts-ignore
+>>>>>>> origin/main
       textRef.current.text = getPersonCondition(signals)
     }
   })
@@ -367,10 +394,22 @@ const WebcamEmotionDetector: React.FC<WebcamEmotionDetectorProps> = ({ onEmotion
         faceapi.draw.drawDetections(canvas, resizedDetections)
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
 
+<<<<<<< HEAD
         if (detections.length > 0) {
           const emotions = detections[0].expressions
           const dominantEmotion = Object.entries(emotions).reduce((a, b) => a[1] > b[1] ? a : b)[0]
           onEmotionDetected(dominantEmotion)
+=======
+        if (detections.length > 0 && detections[0].expressions) {
+          const emotions: Record<string, number> = detections[0].expressions;
+          const dominantEmotion = Object.entries(emotions).reduce<[string, number]>(
+            (a, b) => (a[1] > b[1] ? a : b),
+            ['neutral', 0]  // Default value if the emotions object is empty
+          )[0];
+          onEmotionDetected(dominantEmotion);
+        } else {
+          onEmotionDetected('neutral');  // Default emotion if no detections
+>>>>>>> origin/main
         }
       }
     }, 100)
